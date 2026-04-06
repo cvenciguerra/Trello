@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meu Kanban Premium</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --bg-secondary: rgba(255,255,255,0.95);
+            --bg-tertiary: #f1f5f9;
+            --bg-card: white;
+            --text-primary: #1f2937;
+            --text-secondary: #6b7280;
+            --text-muted: #9ca3af;
+            --border: rgba(0,0,0,0.1);
+            --shadow: rgba(0,0,0,0.12);
+            --accent: #3b82f6;
+            --accent-rgb: 59, 130, 246;
+            --success: #10b981;
+            --success-rgb: 16, 185, 129;
+            --warning: #f59e0b;
+            --warning-rgb: 245, 158, 11;
+            --error: #ef4444;
+            --error-rgb: 239, 68, 68;
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            --bg-secondary: rgba(30,41,59,0.95);
+            --bg-tertiary: #374151;
+            --bg-card: #1f2937;
+            --text-primary: #f9fafb;
+            --text-secondary: #d1d5db;
+            --text-muted: #9ca3af;
+            --border: rgba(255,255,255,0.1);
+            --shadow: rgba(0,0,0,0.3);
+            --accent: #60a5fa;
+            --accent-rgb: 96, 165, 250;
+            --success: #34d399;
+            --success-rgb: 52, 211, 153;
+            --warning: #fbbf24;
+            --warning-rgb: 251, 191, 36;
+            --error: #f87171;
+            --error-rgb: 248, 113, 113;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body { font-family: 'Inter', sans-serif; background: var(--bg-primary); min-height: 100vh; color: var(--text-primary); }
+
+        .board { background: var(--bg-secondary); border-radius: 16px; padding: 24px; margin: 20px; box-shadow: 0 20px 60px var(--shadow); backdrop-filter: blur(10px); }
+        .list { background: var(--bg-tertiary); border-radius: 12px; padding: 16px; min-width: 300px; max-width: 300px; margin-right: 16px; box-shadow: 0 4px 12px var(--shadow); transition: all 0.2s ease; }
+        .card { background: var(--bg-card); border-radius: 10px; padding: 14px; margin-bottom: 10px; box-shadow: 0 2px 8px var(--shadow); cursor: grab; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); color: var(--text-primary); transform: translateY(0); }
+        .card:hover { box-shadow: 0 8px 24px var(--shadow); transform: translateY(-3px); }
+        .card:active { cursor: grabbing; transform: scale(1.02); }
+        .drag-over { background-color: rgba(var(--accent-rgb, 59, 130, 246), 0.15); border: 2px dashed var(--accent); }
+        .modal-active { display: flex !important; animation: fadeIn 0.2s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        .editing { background: var(--bg-card); border: 1px solid var(--accent); border-radius: 4px; }
+        .label { display: inline-block; padding: 3px 10px; border-radius: 14px; font-size: 11px; font-weight: 600; margin-right: 4px; margin-bottom: 6px; }
+        .overdue { color: var(--error); }
+        .due-soon { color: var(--warning); }
+        .tab { color: var(--text-secondary); background: var(--bg-tertiary); border: 1px solid var(--border); transition: all 0.2s ease; }
+        .tab.active { border-color: var(--accent); color: var(--accent); background: var(--bg-card); box-shadow: 0 2px 8px rgba(var(--accent-rgb), 0.1); }
+        .tab:hover { transform: translateY(-1px); }
+        .priority-high { background-color: rgba(var(--error-rgb), 0.15); color: var(--error); }
+        .priority-medium { background-color: rgba(var(--warning-rgb), 0.15); color: var(--warning); }
+        .priority-low { background-color: rgba(var(--success-rgb), 0.15); color: var(--success); }
+        .category-label { background-color: rgba(var(--accent-rgb), 0.15); color: var(--accent); }
+
+        /* Modal styles */
+        .modal-content { background: var(--bg-card); color: var(--text-primary); animation: slideUp 0.3s ease; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        input, textarea, select { background: var(--bg-card); color: var(--text-primary); border-color: var(--border); transition: all 0.2s ease; }
+        input:focus, textarea:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.1); }
+        input::placeholder, textarea::placeholder { color: var(--text-muted); }
+
+        button { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+        button:hover { transform: translateY(-1px); box-shadow: 0 4px 12px var(--shadow); }
+        button:active { transform: translateY(0); }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-tertiary); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb { background: var(--text-muted); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--text-secondary); }
+
+        /* Estatísticas */
+        .stat-card { background: var(--bg-tertiary); border-radius: 10px; padding: 16px; text-align: center; transition: all 0.2s ease; }
+        .stat-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px var(--shadow); }
+        .stat-number { font-size: 28px; font-weight: 700; margin-bottom: 4px; }
+        .stat-label { font-size: 12px; color: var(--text-secondary); }
+
+        /* Arrastando */
+        .dragging { opacity: 0.5; transform: rotate(3deg) scale(1.05); }
+    </style>
+    <link rel="stylesheet" href="style.css">
+    <script src="app.js" defer></script>
+</head>
+<body class="text-gray-800">
+
+    <div class="board">
+        <header class="flex justify-between items-center mb-6 flex-wrap gap-4">
+            <div class="flex items-center gap-3">
+                <button id="menuToggle" onclick="toggleMobileMenu()" class="menu-toggle lg:hidden">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+                <h1 id="boardTitle" class="text-2xl font-bold cursor-pointer" style="color: var(--text-primary);" onclick="editBoardTitle()">FocusBoard</h1>
+            </div>
+            <div class="flex items-center gap-3 flex-wrap header-actions" id="headerActions">
+                <input id="searchInput" type="text" placeholder="Buscar cards..." class="px-3 py-2 rounded-lg border outline-none focus:ring-2 text-sm" style="border-color: var(--border); background: var(--bg-card); color: var(--text-primary);">
+                <select id="priorityFilter" class="px-3 py-2 rounded-lg border outline-none text-sm" style="border-color: var(--border); background: var(--bg-card); color: var(--text-primary);">
+                    <option value="all">Todas Prioridades</option>
+                    <option value="high">🔴 Alta</option>
+                    <option value="medium">🟡 Média</option>
+                    <option value="low">🟢 Baixa</option>
+                </select>
+                <select id="categoryFilter" class="px-3 py-2 rounded-lg border outline-none text-sm" style="border-color: var(--border); background: var(--bg-card); color: var(--text-primary);">
+                    <option value="all">Todas Categorias</option>
+                    <option value="Trabalho">💼 Trabalho</option>
+                    <option value="Pessoal">🏠 Pessoal</option>
+                    <option value="Estudo">📚 Estudo</option>
+                    <option value="Lazer">🎮 Lazer</option>
+                </select>
+                <select id="sortBy" class="px-3 py-2 rounded-lg border outline-none text-sm" style="border-color: var(--border); background: var(--bg-card); color: var(--text-primary);">
+                    <option value="order">Ordem padrão</option>
+                    <option value="priority">Prioridade</option>
+                    <option value="date">Data vencimento</option>
+                    <option value="title">Nome A-Z</option>
+                </select>
+                <button onclick="clearFilters()" class="px-3 py-2 rounded-lg border outline-none text-sm" style="border-color: var(--border); background: var(--bg-card); color: var(--text-primary);">Limpar</button>
+                <button id="themeToggle" onclick="toggleDarkMode()" class="px-3 py-2 rounded-lg font-medium transition-colors text-sm" style="background: var(--bg-tertiary); color: var(--text-primary);">🌙</button>
+                <button onclick="downloadBackup()" class="px-4 py-2 rounded-lg font-medium transition-colors text-sm" style="background: var(--success); color: white;">📦 Backup</button>
+                <label class="px-4 py-2 rounded-lg font-medium transition-colors cursor-pointer text-sm" style="background: var(--warning); color: white;">
+                    🔄 Restaurar
+                    <input type="file" id="uploadInput" accept=".json" onchange="uploadBackup(event)" class="hidden">
+                </label>
+                <button onclick="clearAllData()" class="px-4 py-2 rounded-lg font-medium transition-colors text-sm" style="background: var(--error); color: white;">🗑️ Limpar</button>
+                <button onclick="undo()" class="px-3 py-2 rounded-lg font-medium transition-colors text-sm" style="background: var(--bg-tertiary); color: var(--text-primary);" title="Desfazer (Ctrl+Z)">↩️</button>
+                <button onclick="redo()" class="px-3 py-2 rounded-lg font-medium transition-colors text-sm" style="background: var(--bg-tertiary); color: var(--text-primary);" title="Refazer (Ctrl+Y)">↪️</button>
+                <button onclick="showTemplates()" class="px-3 py-2 rounded-lg font-medium transition-colors text-sm" style="background: var(--bg-tertiary); color: var(--text-primary);" title="Templates">📑</button>
+                <button onclick="requestNotifications()" class="px-3 py-2 rounded-lg font-medium transition-colors text-sm" style="background: var(--bg-tertiary); color: var(--text-primary);" id="notifBtn" title="Notificações">🔔</button>
+                <button onclick="exportPDF()" class="px-3 py-2 rounded-lg font-medium transition-colors text-sm" style="background: var(--bg-tertiary); color: var(--text-primary);" title="Exportar PDF">📄</button>
+                <button onclick="addList()" class="px-4 py-2 rounded-lg font-medium transition-colors text-sm" style="background: var(--accent); color: white;">+ Adicionar Lista</button>
+            </div>
+        </header>
+
+        <!-- Dashboard de estatísticas -->
+        <div id="stats" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div class="stat-card">
+                <div class="stat-number" style="color: var(--accent);" id="stat-total">0</div>
+                <div class="stat-label">Total Tarefas</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" style="color: var(--warning);" id="stat-doing">0</div>
+                <div class="stat-label">Em Andamento</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" style="color: var(--success);" id="stat-done">0</div>
+                <div class="stat-label">Concluídas</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" style="color: var(--error);" id="stat-overdue">0</div>
+                <div class="stat-label">Atrasadas</div>
+            </div>
+        </div>
+
+        <!-- Barra de Progresso e Taxa de Conclusão -->
+        <div class="mb-6 p-4 rounded-xl" style="background: var(--bg-tertiary);">
+            <div class="flex justify-between items-center mb-2">
+                <span class="font-semibold" style="color: var(--text-primary);">Progresso Geral</span>
+                <span class="font-bold" style="color: var(--accent);" id="stat-completion">0%</span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden" style="background: rgba(0,0,0,0.1);">
+                <div id="completion-progress" class="h-full rounded-full transition-all duration-500 ease-out" 
+                     style="width: 0%; background: linear-gradient(90deg, var(--accent), var(--success));"></div>
+            </div>
+        </div>
+
+        <!-- Gráfico de Distribuição -->
+        <div class="mb-6 p-4 rounded-xl" style="background: var(--bg-tertiary);">
+            <h3 class="font-semibold mb-3" style="color: var(--text-primary);">Distribuição de Tarefas</h3>
+            <div id="task-distribution-chart" class="flex items-center justify-center">
+                <!-- Gráfico será renderizado aqui -->
+            </div>
+        </div>
+
+        <div class="tabs flex mb-6 gap-2">
+            <button onclick="setView('board')" class="tab px-4 py-2 font-medium border-b-2 border-transparent rounded-lg" id="tab-board">📋 Quadro</button>
+            <button onclick="setView('completed')" class="tab px-4 py-2 font-medium border-b-2 border-transparent rounded-lg" id="tab-completed">✅ Concluídas</button>
+            <button onclick="setView('calendar')" class="tab px-4 py-2 font-medium border-b-2 border-transparent rounded-lg" id="tab-calendar">📅 Calendário</button>
+        </div>
+
+        <div id="boardView" class="flex overflow-x-auto pb-4 gap-2">
+            <!-- Lists will be rendered here -->
+        </div>
+
+        <div id="completedView" class="hidden">
+            <h2 class="text-xl font-semibold mb-4" style="color: var(--text-primary);">Tarefas Concluídas</h2>
+            <div id="completedTasks" class="space-y-4">
+                <!-- Completed tasks will be rendered here -->
+            </div>
+        </div>
+
+        <div id="calendarView" class="hidden">
+            <h2 class="text-xl font-semibold mb-4" style="color: var(--text-primary);">Calendário de Tarefas</h2>
+            <div id="calendarTasks" class="space-y-4">
+                <!-- Calendar tasks will be rendered here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Task Modal -->
+    <div id="addTaskModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center p-4 z-50">
+        <div class="modal-content w-full max-w-md rounded-xl shadow-xl overflow-hidden">
+            <div class="p-6 border-b" style="border-color: var(--border);">
+                <h3 class="text-lg font-semibold" style="color: var(--text-primary);">Adicionar Novo Card</h3>
+            </div>
+            <div class="p-6 space-y-4">
+                <input id="newTaskTitle" type="text" placeholder="Título do card" class="w-full px-3 py-2 border rounded-lg outline-none focus:ring-2" style="border-color: var(--border); background: var(--bg-card); color: var(--text-primary);">
+                <textarea id="newTaskDesc" placeholder="Descrição (opcional)" rows="3" class="w-full px-3 py-2 border rounded-lg outline-none focus:ring-2 resize-none" style="border-color: var(--border); background: var(--bg-card); color: var(--text-primary);"></textarea>
+                <select id="newTaskCategory" class="w-full px-3 py-2 border rounded-lg outline-none focus:ring-2" style="border-color: var(--border); background: var(--bg-card); color: var(--text-primary);">
+                    <option value="Trabalho">💼 Trabalho</option>
+                    <option value="Pessoal">🏠 Pessoal</option>
+                    <option value="Estudo">📚 Estudo</option>
+                    <option value="Lazer">🎮 Lazer</option>
+                </select>
+                <select id="newTaskPriority" class="w-full px-3 py-2 border rounded-lg outline-none focus:ring-2" style="border-color: var(--border); background: var(--bg-card); color: var(--text-primary);">
+                    <option value="low">🟢 Baixa Prioridade</option>
+                    <option value="medium" selected>🟡 Média Prioridade</option>
+                    <option value="high">🔴 Alta Prioridade</option>
+                </select>
+                <input id="newTaskDate" type="date" class="w-full px-3 py-2 border rounded-lg outline-none focus:ring-2" style="border-color: var(--border); background: var(--bg-card); color: var(--text-primary);">
+                <select id="newTaskList" class="w-full px-3 py-2 border rounded-lg outline-none focus:ring-2" style="border-color: var(--border); background: var(--bg-card); color: var(--text-primary);">
+                    <!-- Lists will be populated here -->
+                </select>
+                <div class="flex gap-3 pt-4">
+                    <button onclick="createTask()" class="flex-1 py-2 rounded-lg font-medium transition-colors" style="background: var(--accent); color: white;">Criar Card</button>
+                    <button onclick="closeAddTaskModal()" class="px-4 py-2 border rounded-lg font-medium transition-colors" style="border-color: var(--border); background: var(--bg-card); color: var(--text-primary);">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Card Modal -->
+    <div id="cardModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center p-4 z-50">
+        <div class="modal-content w-full max-w-2xl rounded-xl shadow-xl overflow-hidden max-h-[90vh] overflow-y-auto">
+            <div class="p-6 border-b flex justify-between items-center" style="border-color: var(--border);">
+                <h3 id="cardModalTitle" class="text-xl font-semibold" style="color: var(--text-primary);"></h3>
+                <button onclick="closeCardModal()" style="color: var(--text-muted);" class="hover:opacity-75 text-2xl">&times;</button>
+            </div>
+            <div class="p-6 space-y-6">
+                <div>
+                    <label class="block text-sm font-medium mb-2" style="color: var(--text-secondary);">Descrição</label>
+                    <textarea id="cardDesc" rows="4" class="w-full px-3 py-2 border rounded-lg outline-none focus:ring-2 resize-none" style="border-color: var(--border); background: var(--bg-card); color: var(--text-primary);" onchange="updateCardDesc()"></textarea>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-2" style="color: var(--text-secondary);">Categoria</label>
+                        <select id="cardCategory" class="w-full px-3 py-2 border rounded-lg outline-none focus:ring-2" style="border-color: var(--border); background: var(--bg-card); color: var(--text-primary);" onchange="updateCardCategory()">
+                            <option value="Trabalho">💼 Trabalho</option>
+                            <option value="Pessoal">🏠 Pessoal</option>
+                            <option value="Estudo">📚 Estudo</option>
+                            <option value="Lazer">🎮 Lazer</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2" style="color: var(--text-secondary);">Prioridade</label>
+                        <select id="cardPriority" class="w-full px-3 py-2 border rounded-lg outline-none focus:ring-2" style="border-color: var(--border); background: var(--bg-card); color: var(--text-primary);" onchange="updateCardPriority()">
+                            <option value="low">🟢 Baixa</option>
+                            <option value="medium">🟡 Média</option>
+                            <option value="high">🔴 Alta</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2" style="color: var(--text-secondary);">Data de Vencimento</label>
+                    <input id="cardDate" type="date" class="px-3 py-2 border rounded-lg outline-none focus:ring-2" style="border-color: var(--border); background: var(--bg-card); color: var(--text-primary);" onchange="updateCardDate()">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2" style="color: var(--text-secondary);">Tempo Gasto</label>
+                    <div class="flex items-center gap-2">
+                        <span id="timeDisplay" class="font-mono text-lg" style="color: var(--text-primary);">00:00:00</span>
+                        <button id="timeBtn" onclick="toggleTimeTracking()" class="px-4 py-1 rounded transition-colors" style="background: var(--accent); color: white;">Iniciar</button>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2" style="color: var(--text-secondary);">Checklists</label>
+                    <div id="checklistsList" class="space-y-2 max-h-40 overflow-y-auto"></div>
+                    <div class="flex gap-2 mt-2">
+                        <input id="checklistInput" type="text" placeholder="Novo item..." class="flex-1 px-3 py-2 border rounded-lg outline-none focus:ring-2" style="border-color: var(--border); background: var(--bg-card); color: var(--text-primary);">
+                        <button onclick="addChecklistItem()" class="px-4 py-2 rounded-lg transition-colors" style="background: var(--text-primary); color: var(--bg-card);">Adicionar</button>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2" style="color: var(--text-secondary);">Comentários</label>
+                    <div id="commentsList" class="space-y-2 max-h-40 overflow-y-auto"></div>
+                    <div class="flex gap-2 mt-2">
+                        <input id="commentInput" type="text" placeholder="Escreva um comentário..." class="flex-1 px-3 py-2 border rounded-lg outline-none focus:ring-2" style="border-color: var(--border); background: var(--bg-card); color: var(--text-primary);">
+                        <button onclick="addComment()" class="px-4 py-2 rounded-lg transition-colors" style="background: var(--text-primary); color: var(--bg-card);">Enviar</button>
+                    </div>
+                </div>
+                <div class="pt-4 border-t flex justify-between" style="border-color: var(--border);">
+                    <button onclick="markAsComplete()" class="px-4 py-2 rounded-lg font-medium transition-colors" style="background: var(--success); color: white;">✅ Concluir Tarefa</button>
+                    <button onclick="duplicateCard()" class="px-4 py-2 rounded-lg font-medium transition-colors" style="background: var(--accent); color: white;">📋 Duplicar</button>
+                    <button onclick="deleteCard()" style="color: var(--error);" class="hover:opacity-75 font-medium">🗑️ Deletar Card</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
