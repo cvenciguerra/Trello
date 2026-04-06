@@ -1,7 +1,7 @@
 // components.js - Renderização de componentes da UI
 
 import { getData, getLists, getTasks, updateTask, removeTask, addTask, saveHistory } from './storage.js';
-import { generateId, formatDate, isOverdue, getPriorityLabel, getCategoryLabel, showToast } from './utils.js';
+import { generateId, formatDate, formatTime, isOverdue, getPriorityLabel, getCategoryLabel, showToast } from './utils.js';
 
 export function render() {
     const data = getData();
