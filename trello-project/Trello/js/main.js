@@ -53,13 +53,13 @@ function exposeFunctions() {
     window.addComment = addComment;
     window.toggleTimeTracking = toggleTimeTracking;
     window.duplicateCard = duplicateCard;
-    window.deleteCard = () => { if(confirmAction('Excluir card?')) { removeTask(currentCardId); closeCardModal(); render(); showToast('Card excluído!', 'success'); }};
+    window.deleteCard = (taskId) => { const id = taskId || currentCardId; if(confirmAction('Excluir card?')) { removeTask(id); closeCardModal(); render(); showToast('Card excluído!', 'success'); }};
     window.editBoardTitle = () => { const title = prompt('Nome do quadro:', getData().boardTitle); if(title) { updateBoardTitle(title); render(); }};
     window.reopenTask = (taskId) => { updateTask(taskId, {listId: 'todo'}); render(); };
     window.markAsComplete = () => { updateTask(currentCardId, {listId: 'done', completedAt: new Date().toISOString()}); closeCardModal(); render(); showToast('Concluída! 🎉', 'success'); };
     window.allowDrop = (ev) => { ev.preventDefault(); ev.currentTarget.style.background = 'var(--bg-tertiary)'; };
     window.dragLeave = (ev) => { ev.currentTarget.style.background = 'var(--bg-secondary)'; };
-    window.drag = (ev) => { ev.dataTransfer.setData('taskId', ev.target.closest('.card').dataset.taskId); isDragging = true; };
+    window.drag = (ev) => { ev.dataTransfer.setData('taskId', ev.target.closest('.card').dataset.taskId); isDragging = true; ev.target.closest('.card').classList.add('dragging'); };
     window.drop = drop;
     window.downloadBackup = () => { downloadJSON(getData(), `focusboard-backup-${new Date().toISOString().split('T')[0]}.json`); showToast('Backup realizado!', 'success'); };
     window.uploadBackup = uploadBackup;
