@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meu Kanban Premium</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css?v=2">
+</head>
+<body class="text-gray-800">
+
+    <div class="board">
+        <header class="flex justify-between items-center mb-6 flex-wrap gap-4">
+            <h1 id="boardTitle" class="text-2xl font-bold cursor-pointer" style="color: var(--text-primary);" onclick="editBoardTitle()">FocusBoard</h1>
+            <div class="flex items-center gap-3 flex-wrap">
+                <input id="searchInput" type="text" placeholder="Buscar cards..." class="px-3 py-2 rounded-lg border outline-none focus:ring-2 text-sm" style="border-color: var(--border); background: var(--bg-card); color: var(--text-primary);">
+                <select id="priorityFilter" class="px-3 py-2 rounded-lg border outline-none text-sm" style="border-color: var(--border); background: var(--bg-card); color: var(--text-primary);">
+                    <option value="all">Todas Prioridades</option>
+                    <option value="high">🔴 Alta</option>
+                    <option value="medium">🟡 Média</option>
+                    <option value="low">🟢 Baixa</option>
+                </select>
+                <select id="categoryFilter" class="px-3 py-2 rounded-lg border outline-none text-sm" style="border-color: var(--border); background: var(--bg-card); color: var(--text-primary);">
+                    <option value="all">Todas Categorias</option>
+                    <option value="Trabalho">💼 Trabalho</option>
+                    <option value="Pessoal">🏠 Pessoal</option>
+                    <option value="Estudo">📚 Estudo</option>
+                    <option value="Lazer">🎮 Lazer</option>
+                </select>
+                <select id="sortBy" class="px-3 py-2 rounded-lg border outline-none text-sm" style="border-color: var(--border); background: var(--bg-card); color: var(--text-primary);">
+                    <option value="order">Ordem padrão</option>
+                    <option value="priority">Prioridade</option>
+                    <option value="date">Data vencimento</option>
+                    <option value="title">Nome A-Z</option>
+                </select>
+                <button onclick="clearFilters()" class="px-3 py-2 rounded-lg border outline-none text-sm" style="border-color: var(--border); background: var(--bg-card); color: var(--text-primary);">Limpar</button>
+                <button id="themeToggle" onclick="toggleDarkMode()" class="px-3 py-2 rounded-lg font-medium transition-colors text-sm" style="background: var(--bg-tertiary); color: var(--text-primary);">🌙</button>
+                <button onclick="downloadBackup()" class="px-4 py-2 rounded-lg font-medium transition-colors text-sm" style="background: var(--success); color: white;">📦 Backup</button>
+                <label class="px-4 py-2 rounded-lg font-medium transition-colors cursor-pointer text-sm" style="background: var(--warning); color: white;">
+                    🔄 Restaurar
+                    <input type="file" id="uploadInput" accept=".json" onchange="uploadBackup(event)" class="hidden">
+                </label>
+                <button onclick="clearAllData()" class="px-4 py-2 rounded-lg font-medium transition-colors text-sm" style="background: var(--error); color: white;">🗑️ Limpar</button>
+                <button onclick="undo()" class="px-3 py-2 rounded-lg font-medium transition-colors text-sm" style="background: var(--bg-tertiary); color: var(--text-primary);" title="Desfazer (Ctrl+Z)">↩️</button>
+                <button onclick="redo()" class="px-3 py-2 rounded-lg font-medium transition-colors text-sm" style="background: var(--bg-tertiary); color: var(--text-primary);" title="Refazer (Ctrl+Y)">↪️</button>
+                <button onclick="showTemplates()" class="px-3 py-2 rounded-lg font-medium transition-colors text-sm" style="background: var(--bg-tertiary); color: var(--text-primary);" title="Templates">📑</button>
+                <button onclick="requestNotifications()" class="px-3 py-2 rounded-lg font-medium transition-colors text-sm" style="background: var(--bg-tertiary); color: var(--text-primary);" id="notifBtn" title="Notificações">🔔</button>
+                <button onclick="exportPDF()" class="px-3 py-2 rounded-lg font-medium transition-colors text-sm" style="background: var(--bg-tertiary); color: var(--text-primary);" title="Exportar PDF">📄</button>
+                <button onclick="addList()" class="px-4 py-2 rounded-lg font-medium transition-colors text-sm" style="background: var(--accent); color: white;">+ Adicionar Lista</button>
+            </div>
+        </header>
+
+        <div class="tabs flex mb-6 gap-2">
+            <button onclick="setView('board')" class="tab px-4 py-2 font-medium border-b-2 border-transparent rounded-lg cursor-pointer" id="tab-board">📋 Quadro</button>
+            <button onclick="setView('completed')" class="tab px-4 py-2 font-medium border-b-2 border-transparent rounded-lg cursor-pointer" id="tab-completed">✅ Concluídas</button>
+            <button onclick="setView('calendar')" class="tab px-4 py-2 font-medium border-b-2 border-transparent rounded-lg cursor-pointer" id="tab-calendar">📅 Calendário</button>
+            <button onclick="setView('dashboard')" class="tab px-4 py-2 font-medium border-b-2 border-transparent rounded-lg cursor-pointer" id="tab-dashboard">📊 Dashboard</button>
+        </div>
+
+        <button id="newTaskBtn" onclick="openAddTaskModal('todo')" class="mb-4 px-6 py-3 rounded-lg font-bold text-white shadow-lg hover:opacity-90 transition-opacity" style="background: var(--accent);">+ Nova Tarefa</button>
+
+        <!-- View do Quadro Kanban -->
+        <div id="boardView" class="view-section flex overflow-x-auto pb-4 gap-2">
+            <!-- Lists will be rendered here -->
+        </div>
+
+        <!-- View de Concluídas -->
+        <div id="completedView" class="view-section hidden">
+            <h2 class="text-xl font-semibold mb-4" style="color: var(--text-primary);">Tarefas Concluídas</h2>
+            <div id="completedTasks" class="space-y-4">
+                <!-- Completed tasks will be rendered here -->
+            </div>
+        </div>
+
+        <!-- View do Calendário -->
+        <div id="calendarView" class="view-section hidden">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-semibold" style="color: var(--text-primary);">Calendário de Tarefas</h2>
+                <div class="flex items-center space-x-2">
+                    <button onclick="changeMonth(-1)" class="px-3 py-1 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700" style="color: var(--text-primary);">◀ Anterior</button>
+                    <span id="currentMonthYear" class="font-medium px-4" style="color: var(--text-primary);"></span>
+                    <button onclick="changeMonth(1)" class="px-3 py-1 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700" style="color: var(--text-primary);">Próximo ▶</button>
+                </div>
+            </div>
+            <div id="calendarGrid" class="grid grid-cols-7 gap-2 mb-4">
+                <!-- Calendar grid will be rendered here -->
+            </div>
+            <div id="calendarTasks" class="space-y-4">
+                <!-- Selected day tasks will be rendered here -->
+            </div>
+        </div>
+
+        <!-- View do Dashboard -->
+        <div id="dashboardView" class="view-section hidden">
+            <h2 class="text-xl font-semibold mb-4" style="color: var(--text-primary);">Dashboard de Produtividade</h2>
+            <div id="chartsDashboard" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+                <div class="stat-card p-4">
+                    <h3 class="text-lg font-semibold mb-4" style="color: var(--text-primary);">Tarefas por Status</h3>
+                    <canvas id="statusChart"></canvas>
+                </div>
+                <div class="stat-card p-4">
+                    <h3 class="text-lg font-semibold mb-4" style="color: var(--text-primary);">Produtividade (30 dias)</h3>
+                    <canvas id="productivityChart"></canvas>
+                </div>
+                <div class="stat-card p-4">
+                    <h3 class="text-lg font-semibold mb-4" style="color: var(--text-primary);">Tarefas por Prioridade</h3>
+                    <canvas id="priorityChart"></canvas>
+                </div>
+            </div>
+            <div class="stat-card p-4 mb-6">
+                <h3 class="text-lg font-semibold mb-4" style="color: var(--text-primary);">Atividade Anual (Heatmap)</h3>
+                <div id="heatmapContainer" class="overflow-x-auto"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Task Modal -->
+    <div id="addTaskModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center p-4 z-50">
+        <div class="modal-content w-full max-w-md rounded-xl shadow-xl overflow-hidden">
+            <div class="p-6 border-b" style="border-color: var(--border);">
+                <h3 class="text-lg font-semibold" style="color: var(--text-primary);">Adicionar Novo Card</h3>
+            </div>
+            <div class="p-6 space-y-4">
+                <input id="newTaskTitle" type="text" placeholder="Título do card" class="w-full px-3 py-2 border rounded-lg outline-none focus:ring-2" style="border-color: var(--border); background: var(--bg-card); color: var(--text-primary);">
+                <textarea id="newTaskDesc" placeholder="Descrição (opcional)" rows="3" class="w-full px-3 py-2 border rounded-lg outline-none focus:ring-2 resize-none" style="border-color: var(--border); background: var(--bg-card); color: var(--text-primary);"></textarea>
+                <select id="newTaskCategory" class="w-full px-3 py-2 border rounded-lg outline-none focus:ring-2" style="border-color: var(--border); background: var(--bg-card); color: var(--text-primary);">
+                    <option value="Trabalho">💼 Trabalho</option>
+                    <option value="Pessoal">🏠 Pessoal</option>
+                    <option value="Estudo">📚 Estudo</option>
+                    <option value="Lazer">🎮 Lazer</option>
+                </select>
+                <select id="newTaskPriority" class="w-full px-3 py-2 border rounded-lg outline-none focus:ring-2" style="border-color: var(--border); background: var(--bg-card); color: var(--text-primary);">
+                    <option value="low">🟢 Baixa Prioridade</option>
+                    <option value="medium" selected>🟡 Média Prioridade</option>
+                    <option value="high">🔴 Alta Prioridade</option>
+                </select>
+                <input id="newTaskDate" type="date" class="w-full px-3 py-2 border rounded-lg outline-none focus:ring-2" style="border-color: var(--border); background: var(--bg-card); color: var(--text-primary);">
+                <select id="newTaskList" class="w-full px-3 py-2 border rounded-lg outline-none focus:ring-2" style="border-color: var(--border); background: var(--bg-card); color: var(--text-primary);">
+                    <!-- Lists will be populated here -->
+                </select>
+                <div class="flex gap-3 pt-4">
+                    <button onclick="createTask()" class="flex-1 py-2 rounded-lg font-medium transition-colors" style="background: var(--accent); color: white;">Criar Card</button>
+                    <button onclick="closeAddTaskModal()" class="px-4 py-2 border rounded-lg font-medium transition-colors" style="border-color: var(--border); background: var(--bg-card); color: var(--text-primary);">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Card Modal -->
+    <div id="cardModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center p-4 z-50">
+        <div class="modal-content w-full max-w-2xl rounded-xl shadow-xl overflow-hidden max-h-[90vh] overflow-y-auto">
+            <div class="p-6 border-b flex justify-between items-center" style="border-color: var(--border);">
+                <h3 id="cardModalTitle" class="text-xl font-semibold" style="color: var(--text-primary);"></h3>
+                <button onclick="closeCardModal()" style="color: var(--text-muted);" class="hover:opacity-75 text-2xl">&times;</button>
+            </div>
+            <div class="p-6 space-y-6">
+                <div>
+                    <label class="block text-sm font-medium mb-2" style="color: var(--text-secondary);">Descrição</label>
+                    <textarea id="cardDesc" rows="4" class="w-full px-3 py-2 border rounded-lg outline-none focus:ring-2 resize-none" style="border-color: var(--border); background: var(--bg-card); color: var(--text-primary);" onchange="updateCardDesc()"></textarea>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-2" style="color: var(--text-secondary);">Categoria</label>
+                        <select id="cardCategory" class="w-full px-3 py-2 border rounded-lg outline-none focus:ring-2" style="border-color: var(--border); background: var(--bg-card); color: var(--text-primary);" onchange="updateCardCategory()">
+                            <option value="Trabalho">💼 Trabalho</option>
+                            <option value="Pessoal">🏠 Pessoal</option>
+                            <option value="Estudo">📚 Estudo</option>
+                            <option value="Lazer">🎮 Lazer</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2" style="color: var(--text-secondary);">Prioridade</label>
+                        <select id="cardPriority" class="w-full px-3 py-2 border rounded-lg outline-none focus:ring-2" style="border-color: var(--border); background: var(--bg-card); color: var(--text-primary);" onchange="updateCardPriority()">
+                            <option value="low">🟢 Baixa</option>
+                            <option value="medium">🟡 Média</option>
+                            <option value="high">🔴 Alta</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2" style="color: var(--text-secondary);">Data de Vencimento</label>
+                    <input id="cardDate" type="date" class="px-3 py-2 border rounded-lg outline-none focus:ring-2" style="border-color: var(--border); background: var(--bg-card); color: var(--text-primary);" onchange="updateCardDate()">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2" style="color: var(--text-secondary);">Tempo Gasto</label>
+                    <div class="flex items-center gap-2">
+                        <span id="timeDisplay" class="font-mono text-lg" style="color: var(--text-primary);">00:00:00</span>
+                        <button id="timeBtn" onclick="toggleTimeTracking()" class="px-4 py-1 rounded transition-colors" style="background: var(--accent); color: white;">Iniciar</button>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2" style="color: var(--text-secondary);">Checklists</label>
+                    <div id="checklistsList" class="space-y-2 max-h-40 overflow-y-auto"></div>
+                    <div class="flex gap-2 mt-2">
+                        <input id="checklistInput" type="text" placeholder="Novo item..." class="flex-1 px-3 py-2 border rounded-lg outline-none focus:ring-2" style="border-color: var(--border); background: var(--bg-card); color: var(--text-primary);">
+                        <button onclick="addChecklistItem()" class="px-4 py-2 rounded-lg transition-colors" style="background: var(--text-primary); color: var(--bg-card);">Adicionar</button>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2" style="color: var(--text-secondary);">Comentários</label>
+                    <div id="commentsList" class="space-y-2 max-h-40 overflow-y-auto"></div>
+                    <div class="flex gap-2 mt-2">
+                        <input id="commentInput" type="text" placeholder="Escreva um comentário..." class="flex-1 px-3 py-2 border rounded-lg outline-none focus:ring-2" style="border-color: var(--border); background: var(--bg-card); color: var(--text-primary);">
+                        <button onclick="addComment()" class="px-4 py-2 rounded-lg transition-colors" style="background: var(--text-primary); color: var(--bg-card);">Enviar</button>
+                    </div>
+                </div>
+                <div class="pt-4 border-t flex justify-between" style="border-color: var(--border);">
+                    <button onclick="markAsComplete()" class="px-4 py-2 rounded-lg font-medium transition-colors" style="background: var(--success); color: white;">✅ Concluir Tarefa</button>
+                    <button onclick="duplicateCard()" class="px-4 py-2 rounded-lg font-medium transition-colors" style="background: var(--accent); color: white;">📋 Duplicar</button>
+                    <button onclick="deleteCard()" style="color: var(--error);" class="hover:opacity-75 font-medium">🗑️ Deletar Card</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications Container -->
+    <div id="toastContainer" class="fixed bottom-4 right-4 z-[9999] space-y-2"></div>
+
+    <script type="module" src="js/main.js?v=2"></script>
+</body></html>
