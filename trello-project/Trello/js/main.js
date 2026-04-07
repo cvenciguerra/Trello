@@ -1,7 +1,7 @@
 // main.js - Ponto de entrada principal da aplicação
 import { migrateData, getData, getLists, getTasks, addTask, updateTask, removeTask, addList, removeList, updateList, updateBoardTitle, toggleDarkMode as toggleDark, clearAllData as clearData, importData } from './storage.js';
 import { generateId, formatDate, formatTime, getPriorityLabel, debounce, showToast, confirmAction, downloadJSON } from './utils.js';
-import { render, populateListSelect, updateCardModal, renderCalendarView } from './components.js';
+import { render, populateListSelect, updateCardModal, renderCalendarView, renderCharts } from './components.js';
 
 let currentCardId = null;
 let isDragging = false;
@@ -81,6 +81,12 @@ function setView(view) {
     document.getElementById('calendarView').classList.toggle('hidden', view !== 'calendar');
     document.getElementById('dashboardView').classList.toggle('hidden', view !== 'dashboard');
     document.getElementById('miniStats').classList.toggle('hidden', view !== 'board');
+    
+    // Renderizar gráficos quando visualizar o dashboard
+    if (view === 'dashboard') {
+        setTimeout(() => renderCharts(), 100);
+    }
+    
     render();
 }
 
