@@ -11,12 +11,15 @@ __pycache__/
 *.out
 
 # Dependencies
-node_modules/
-venv/
 .venv/
-.env
-.env.local
-.env.*
+venv/
+node_modules/
+target/
+.gradle/
+.mypy_cache/
+.pytest_cache/
+dist/
+build/
 
 # Logs and temp files
 *.log
@@ -24,18 +27,23 @@ venv/
 *.swp
 *.swo
 
+# Environment
+.env
+.env.local
+*.env.*
+
 # Editors
 .vscode/
 .idea/
+
+# System files
+.DS_Store
+Thumbs.db
 
 # Coverage
 coverage/
 htmlcov/
 .coverage
-
-# OS
-.DS_Store
-Thumbs.db
 
 # Compressed files
 *.zip
@@ -60,80 +68,3 @@ Thumbs.db
 *.tar.bz2
 *.tar.xz
 *.tar.zst
-
-# Python specific
-*.pyc
-__pycache__/
-*.pyo
-*.pyd
-.Python
-*.so
-.Python
-*.egg-info/
-.eggs/
-.mypy_cache/
-.pytest_cache/
-.tox/
-.coverage
-coverage.xml
-*.cover
-.hypothesis/
-.nox/
-.pyre/
-.pytype/
-cython_debug/
-
-# Build directories
-build/
-dist/
-*.egg
-*.eggs
-.installed.cfg
-*.egg-info/
-.egg-info/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-develop-eggs/
-pip-wheel-metadata/
-requirements.txt.bak
-.wheelhouse/
-.wheels/
-.wheelhouse-build/
-.pybuild/
-.pybuild-cachedir/
-.pybuild-cachedir-build/
-.pybuild-cachedir-install/
-.pybuild-cachedir-test/
-.pybuild-cachedir-doc/
-.pybuild-cachedir-sdist/
-.pybuild-cachedir-wheel/
-.pybuild-cachedir-bdist_wheel/
-.pybuild-cachedir-bdist_egg/
-.pybuild-cachedir-bdist_rpm/
-.pybuild-cachedir-bdist_wininst/
-.pybuild-cachedir-upload/
-.pybuild-cachedir-check/
-.pybuild-cachedir-clean/
-.pybuild-cachedir-freeze/
-.pybuild-cachedir-list/
-.pybuild-cachedir-show/
-.pybuild-cachedir-download/
-.pybuild-cachedir-install/
-.pybuild-cachedir-uninstall/
-.pybuild-cachedir-search/
-.pybuild-cachedir-wheel/
-.pybuild-cachedir-bdist_wheel/
-.pybuild-cachedir-bdist_egg/
-.pybuild-cachedir-bdist_rpm/
-.pybuild-cachedir-bdist_wininst/
-.pybuild-cachedir-upload/
-.pybuild-cachedir-check/
-.pybuild-cachedir-clean/
-.pybuild-cachedir-freeze/
-.pybuild-cachedir-list/
-.pybuild-cachedir-show/
-.pybuild-cachedir-download/
-.pybuild-cachedir-search/
