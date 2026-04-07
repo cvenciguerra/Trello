@@ -25,7 +25,7 @@ export function render() {
 
     renderBoard();
     renderCompleted();
-    renderCalendar();
+    // renderCalendar() é chamado apenas quando necessário em main.js
 }
 
 export function renderBoard() {
@@ -177,55 +177,8 @@ export function renderCompleted() {
 }
 
 export function renderCalendar() {
-    const data = getData();
-    const tasksWithDates = data.tasks.filter(t => t.date && t.listId !== 'done');
-    const container = document.getElementById('calendarTasks');
-
-    if (tasksWithDates.length === 0) {
-        container.innerHTML = `<p class="text-center py-8" style="color: var(--text-secondary);">Nenhuma tarefa com data definida.</p>`;
-        return;
-    }
-
-    // Agrupar tarefas por mês
-    const tasksByMonth = {};
-    tasksWithDates.forEach(task => {
-        const date = new Date(task.date);
-        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-        if (!tasksByMonth[monthKey]) {
-            tasksByMonth[monthKey] = [];
-        }
-        tasksByMonth[monthKey].push(task);
-    });
-
-    const sortedMonths = Object.keys(tasksByMonth).sort();
-    
-    container.innerHTML = sortedMonths.map(month => {
-        const [year, monthNum] = month.split('-');
-        const monthName = new Date(year, monthNum - 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
-        
-        return `
-            <div class="mb-6">
-                <h3 class="text-lg font-semibold mb-3 capitalize" style="color: var(--text-primary);">${monthName}</h3>
-                <div class="space-y-2">
-                    ${tasksByMonth[month].map(task => `
-                        <div class="card p-3 rounded-lg flex justify-between items-center"
-                             style="background: var(--bg-card);">
-                            <div class="flex items-center gap-3">
-                                <span class="date-badge px-3 py-1 rounded text-sm font-medium"
-                                      style="background: var(--${task.priority === 'high' ? 'error' : task.priority === 'medium' ? 'warning' : 'success'}); color: white;">
-                                    ${new Date(task.date).getDate()}
-                                </span>
-                                <span style="color: var(--text-primary);">${task.title}</span>
-                            </div>
-                            <span class="text-xs" style="color: var(--text-secondary);">
-                                ${getCategoryLabel(task.category)}
-                            </span>
-                        </div>
-                    `).join('')}
-                </div>
-            </div>
-        `;
-    }).join('');
+    // A função renderCalendar agora está em main.js para melhor controle do estado do calendário
+    // Esta função é chamada apenas quando a view de calendário está ativa
 }
 
 export function populateListSelect(selectId, selectedListId = null) {

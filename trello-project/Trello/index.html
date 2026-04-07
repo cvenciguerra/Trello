@@ -89,9 +89,19 @@
         </div>
 
         <div id="calendarView" class="hidden">
-            <h2 class="text-xl font-semibold mb-4" style="color: var(--text-primary);">Calendário de Tarefas</h2>
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-semibold" style="color: var(--text-primary);">Calendário de Tarefas</h2>
+                <div class="flex items-center space-x-2">
+                    <button onclick="changeMonth(-1)" class="px-3 py-1 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700" style="color: var(--text-primary);">◀ Anterior</button>
+                    <span id="currentMonthYear" class="font-medium px-4" style="color: var(--text-primary);"></span>
+                    <button onclick="changeMonth(1)" class="px-3 py-1 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700" style="color: var(--text-primary);">Próximo ▶</button>
+                </div>
+            </div>
+            <div id="calendarGrid" class="grid grid-cols-7 gap-2 mb-4">
+                <!-- Calendar grid will be rendered here -->
+            </div>
             <div id="calendarTasks" class="space-y-4">
-                <!-- Calendar tasks will be rendered here -->
+                <!-- Selected day tasks will be rendered here -->
             </div>
         </div>
     </div>
