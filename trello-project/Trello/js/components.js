@@ -3,6 +3,11 @@
 import { getData, getLists, getTasks, updateTask, removeTask, addTask, saveHistory } from './storage.js';
 import { generateId, formatDate, formatTime, isOverdue, getPriorityLabel, getCategoryLabel, showToast } from './utils.js';
 
+// Variáveis globais para os gráficos
+let statusChartInstance = null;
+let productivityChartInstance = null;
+let priorityChartInstance = null;
+
 export function render() {
     const data = getData();
     
@@ -22,6 +27,9 @@ export function render() {
         if (!t.date || t.listId === 'done') return false;
         return new Date(t.date) < today;
     }).length;
+
+    // Renderizar gráficos
+    renderCharts();
 
     renderBoard();
     renderCompleted();
@@ -223,4 +231,245 @@ export function updateCardModal(task) {
     } else {
         commentsContainer.innerHTML = '<p class="text-sm" style="color: var(--text-secondary);">Nenhum comentário.</p>';
     }
+}
+
+// Função para renderizar os gráficos do dashboard
+export function renderCharts() {
+    const tasks = getTasks();
+    const data = getData();
+    
+    // Cores baseadas no tema
+    const isDark = data.isDarkMode;
+    const textColor = isDark ? '#e5e7eb' : '#374151';
+    const gridColor = isDark ? '#374151' : '#e5e7eb';
+    
+    // 1. Gráfico de Status (Doughnut)
+    const statusCtx = document.getElementById('statusChart');
+    if (statusCtx) {
+        const todoCount = tasks.filter(t => t.listId === 'todo').length;
+        const doingCount = tasks.filter(t => t.listId === 'doing').length;
+        const doneCount = tasks.filter(t => t.listId === 'done').length;
+        
+        if (statusChartInstance) {
+            statusChartInstance.destroy();
+        }
+        
+        statusChartInstance = new Chart(statusCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['A Fazer', 'Em Progresso', 'Concluídas'],
+                datasets: [{
+                    data: [todoCount, doingCount, doneCount],
+                    backgroundColor: ['#f59e0b', '#3b82f6', '#10b981'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { color: textColor }
+                    }
+                }
+            }
+        });
+    }
+    
+    // 2. Gráfico de Produtividade (Line - últimos 30 dias)
+    const prodCtx = document.getElementById('productivityChart');
+    if (prodCtx) {
+        const last30Days = [];
+        const completedPerDay = [];
+        
+        for (let i = 29; i >= 0; i--) {
+            const date = new Date();
+            date.setDate(date.getDate() - i);
+            date.setHours(0, 0, 0, 0);
+            last30Days.push(date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }));
+            
+            const count = tasks.filter(t => {
+                if (!t.completedAt) return false;
+                const taskDate = new Date(t.completedAt);
+                taskDate.setHours(0, 0, 0, 0);
+                return taskDate.getTime() === date.getTime();
+            }).length;
+            completedPerDay.push(count);
+        }
+        
+        if (productivityChartInstance) {
+            productivityChartInstance.destroy();
+        }
+        
+        productivityChartInstance = new Chart(prodCtx, {
+            type: 'line',
+            data: {
+                labels: last30Days,
+                datasets: [{
+                    label: 'Tarefas Concluídas',
+                    data: completedPerDay,
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { color: textColor },
+                        grid: { color: gridColor }
+                    },
+                    x: {
+                        ticks: { color: textColor, maxRotation: 45 },
+                        grid: { display: false }
+                    }
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false
+                    }
+                }
+            }
+        });
+    }
+    
+    // 3. Gráfico de Prioridade (Bar)
+    const prioCtx = document.getElementById('priorityChart');
+    if (prioCtx) {
+        const highCount = tasks.filter(t => t.priority === 'high').length;
+        const mediumCount = tasks.filter(t => t.priority === 'medium').length;
+        const lowCount = tasks.filter(t => t.priority === 'low').length;
+        
+        if (priorityChartInstance) {
+            priorityChartInstance.destroy();
+        }
+        
+        priorityChartInstance = new Chart(prioCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Alta 🔴', 'Média 🟡', 'Baixa 🟢'],
+                datasets: [{
+                    label: 'Tarefas por Prioridade',
+                    data: [highCount, mediumCount, lowCount],
+                    backgroundColor: ['#ef4444', '#f59e0b', '#10b981'],
+                    borderRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { color: textColor },
+                        grid: { color: gridColor }
+                    },
+                    x: {
+                        ticks: { color: textColor },
+                        grid: { display: false }
+                    }
+                },
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
+    }
+    
+    // 4. Heatmap de Atividade Anual
+    renderHeatmap(tasks, isDark, textColor);
+}
+
+// Função para renderizar o heatmap estilo GitHub
+function renderHeatmap(tasks, isDark, textColor) {
+    const container = document.getElementById('heatmapContainer');
+    if (!container) return;
+    
+    const today = new Date();
+    const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+    const monthLabels = [];
+    for (let i = 0; i < 12; i++) {
+        monthLabels.push(months[i]);
+    }
+    
+    // Calcular dados dos últimos 365 dias
+    const dayData = {};
+    const startOfDay = new Date(today);
+    startOfDay.setDate(startOfDay.getDate() - 364);
+    startOfDay.setHours(0, 0, 0, 0);
+    
+    // Inicializar todos os dias com 0
+    for (let i = 0; i < 365; i++) {
+        const date = new Date(startOfDay);
+        date.setDate(date.getDate() + i);
+        const dateStr = date.toISOString().split('T')[0];
+        dayData[dateStr] = 0;
+    }
+    
+    // Contar tarefas concluídas por dia
+    tasks.forEach(task => {
+        if (task.completedAt) {
+            const dateStr = new Date(task.completedAt).toISOString().split('T')[0];
+            if (dayData.hasOwnProperty(dateStr)) {
+                dayData[dateStr]++;
+            }
+        }
+    });
+    
+    // Função para obter cor baseada na contagem
+    function getColor(count) {
+        if (count === 0) return isDark ? '#161b22' : '#ebedf0';
+        if (count <= 2) return isDark ? '#0e4429' : '#9be9a8';
+        if (count <= 4) return isDark ? '#006d32' : '#40c463';
+        if (count <= 6) return isDark ? '#26a641' : '#30a14e';
+        return isDark ? '#39d353' : '#216e39';
+    }
+    
+    // Gerar HTML do heatmap
+    let html = '<div class="flex gap-2">';
+    html += '<div class="flex flex-col justify-between text-xs py-2" style="color: ' + textColor + ';">';
+    monthLabels.forEach(m => html += `<div class="h-3 mb-1">${m}</div>`);
+    html += '</div>';
+    
+    html += '<div class="grid grid-cols-[repeat(53,minmax(0,12px))] gap-[3px]">';
+    
+    for (let week = 0; week < 53; week++) {
+        html += '<div class="flex flex-col gap-[3px]">';
+        for (let day = 0; day < 7; day++) {
+            const date = new Date(startOfDay);
+            date.setDate(date.getDate() + (week * 7) + day);
+            if (date > today) {
+                html += `<div class="w-3 h-3 rounded-sm" style="background: ${isDark ? '#161b22' : '#ebedf0'};"></div>`;
+            } else {
+                const dateStr = date.toISOString().split('T')[0];
+                const count = dayData[dateStr] || 0;
+                const color = getColor(count);
+                html += `<div class="w-3 h-3 rounded-sm" style="background: ${color};" title="${date.toLocaleDateString('pt-BR')}: ${count} tarefas"></div>`;
+            }
+        }
+        html += '</div>';
+    }
+    
+    html += '</div></div>';
+    
+    // Legenda
+    html += '<div class="flex items-center gap-2 mt-4 text-xs" style="color: ' + textColor + ';">';
+    html += '<span>Menos</span>';
+    html += `<div class="w-3 h-3 rounded-sm" style="background: ${isDark ? '#161b22' : '#ebedf0'};"></div>`;
+    html += `<div class="w-3 h-3 rounded-sm" style="background: ${isDark ? '#0e4429' : '#9be9a8'};"></div>`;
+    html += `<div class="w-3 h-3 rounded-sm" style="background: ${isDark ? '#006d32' : '#40c463'};"></div>`;
+    html += `<div class="w-3 h-3 rounded-sm" style="background: ${isDark ? '#26a641' : '#30a14e'};"></div>`;
+    html += `<div class="w-3 h-3 rounded-sm" style="background: ${isDark ? '#39d353' : '#216e39'};"></div>`;
+    html += '<span>Mais</span>';
+    html += '</div>';
+    
+    container.innerHTML = html;
 }

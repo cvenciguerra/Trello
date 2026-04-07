@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Meu Kanban Premium</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
@@ -69,6 +70,26 @@
                 <div class="stat-number" style="color: var(--error);" id="stat-overdue">0</div>
                 <div class="stat-label">Atrasadas</div>
             </div>
+        </div>
+
+        <!-- Gráficos do Dashboard -->
+        <div id="chartsDashboard" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+            <div class="stat-card p-4">
+                <h3 class="text-lg font-semibold mb-4" style="color: var(--text-primary);">Tarefas por Status</h3>
+                <canvas id="statusChart"></canvas>
+            </div>
+            <div class="stat-card p-4">
+                <h3 class="text-lg font-semibold mb-4" style="color: var(--text-primary);">Produtividade (30 dias)</h3>
+                <canvas id="productivityChart"></canvas>
+            </div>
+            <div class="stat-card p-4">
+                <h3 class="text-lg font-semibold mb-4" style="color: var(--text-primary);">Tarefas por Prioridade</h3>
+                <canvas id="priorityChart"></canvas>
+            </div>
+        </div>
+        <div class="stat-card p-4 mb-6">
+            <h3 class="text-lg font-semibold mb-4" style="color: var(--text-primary);">Atividade Anual (Heatmap)</h3>
+            <div id="heatmapContainer" class="overflow-x-auto"></div>
         </div>
 
         <div class="tabs flex mb-6 gap-2">
