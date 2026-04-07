@@ -95,3 +95,10 @@ button:active { transform: translateY(0); }
 /* Toast animations */
 @keyframes slideIn { from { opacity: 0; transform: translateX(100%); } to { opacity: 1; transform: translateX(0); } }
 @keyframes slideOut { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(100%); } }
+
+/* View sections */
+.view-section { display: block; }
+.view-section.hidden { display: none; }
+
+/* Tabs active state */
+.tab.active { border-color: var(--accent); color: var(--accent); background: var(--bg-card); box-shadow: 0 2px 8px rgba(var(--accent-rgb), 0.1); }

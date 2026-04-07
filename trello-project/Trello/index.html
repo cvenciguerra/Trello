@@ -52,8 +52,48 @@
             </div>
         </header>
 
-        <!-- Gráficos do Dashboard (só aparece na aba Dashboard) -->
-        <div id="dashboardView" class="hidden">
+        <div class="tabs flex mb-6 gap-2">
+            <button onclick="setView('board')" class="tab px-4 py-2 font-medium border-b-2 border-transparent rounded-lg" id="tab-board">📋 Quadro</button>
+            <button onclick="setView('completed')" class="tab px-4 py-2 font-medium border-b-2 border-transparent rounded-lg" id="tab-completed">✅ Concluídas</button>
+            <button onclick="setView('calendar')" class="tab px-4 py-2 font-medium border-b-2 border-transparent rounded-lg" id="tab-calendar">📅 Calendário</button>
+            <button onclick="setView('dashboard')" class="tab px-4 py-2 font-medium border-b-2 border-transparent rounded-lg" id="tab-dashboard">📊 Dashboard</button>
+        </div>
+
+        <button id="newTaskBtn" onclick="openAddTaskModal('todo')" class="mb-4 px-6 py-3 rounded-lg font-bold text-white shadow-lg hover:opacity-90 transition-opacity" style="background: var(--accent);">+ Nova Tarefa</button>
+
+        <!-- View do Quadro Kanban -->
+        <div id="boardView" class="view-section flex overflow-x-auto pb-4 gap-2">
+            <!-- Lists will be rendered here -->
+        </div>
+
+        <!-- View de Concluídas -->
+        <div id="completedView" class="view-section hidden">
+            <h2 class="text-xl font-semibold mb-4" style="color: var(--text-primary);">Tarefas Concluídas</h2>
+            <div id="completedTasks" class="space-y-4">
+                <!-- Completed tasks will be rendered here -->
+            </div>
+        </div>
+
+        <!-- View do Calendário -->
+        <div id="calendarView" class="view-section hidden">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-semibold" style="color: var(--text-primary);">Calendário de Tarefas</h2>
+                <div class="flex items-center space-x-2">
+                    <button onclick="changeMonth(-1)" class="px-3 py-1 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700" style="color: var(--text-primary);">◀ Anterior</button>
+                    <span id="currentMonthYear" class="font-medium px-4" style="color: var(--text-primary);"></span>
+                    <button onclick="changeMonth(1)" class="px-3 py-1 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700" style="color: var(--text-primary);">Próximo ▶</button>
+                </div>
+            </div>
+            <div id="calendarGrid" class="grid grid-cols-7 gap-2 mb-4">
+                <!-- Calendar grid will be rendered here -->
+            </div>
+            <div id="calendarTasks" class="space-y-4">
+                <!-- Selected day tasks will be rendered here -->
+            </div>
+        </div>
+
+        <!-- View do Dashboard -->
+        <div id="dashboardView" class="view-section hidden">
             <h2 class="text-xl font-semibold mb-4" style="color: var(--text-primary);">Dashboard de Produtividade</h2>
             <div id="chartsDashboard" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
                 <div class="stat-card p-4">
@@ -72,63 +112,6 @@
             <div class="stat-card p-4 mb-6">
                 <h3 class="text-lg font-semibold mb-4" style="color: var(--text-primary);">Atividade Anual (Heatmap)</h3>
                 <div id="heatmapContainer" class="overflow-x-auto"></div>
-            </div>
-        </div>
-
-        <!-- Mini estatísticas (sempre visíveis no Quadro) -->
-        <div id="miniStats" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <div class="stat-card">
-                <div class="stat-number" style="color: var(--accent);" id="stat-total">0</div>
-                <div class="stat-label">Total Tarefas</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number" style="color: var(--warning);" id="stat-doing">0</div>
-                <div class="stat-label">Em Andamento</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number" style="color: var(--success);" id="stat-done">0</div>
-                <div class="stat-label">Concluídas</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number" style="color: var(--error);" id="stat-overdue">0</div>
-                <div class="stat-label">Atrasadas</div>
-            </div>
-        </div>
-
-        <div class="tabs flex mb-6 gap-2">
-            <button onclick="setView('board')" class="tab px-4 py-2 font-medium border-b-2 border-transparent rounded-lg" id="tab-board">📋 Quadro</button>
-            <button onclick="setView('completed')" class="tab px-4 py-2 font-medium border-b-2 border-transparent rounded-lg" id="tab-completed">✅ Concluídas</button>
-            <button onclick="setView('calendar')" class="tab px-4 py-2 font-medium border-b-2 border-transparent rounded-lg" id="tab-calendar">📅 Calendário</button>
-            <button onclick="setView('dashboard')" class="tab px-4 py-2 font-medium border-b-2 border-transparent rounded-lg" id="tab-dashboard">📊 Dashboard</button>
-        </div>
-
-        <button onclick="openAddTaskModal('todo')" class="mb-4 px-6 py-3 rounded-lg font-bold text-white shadow-lg hover:opacity-90 transition-opacity" style="background: var(--accent);">+ Nova Tarefa</button>
-
-        <div id="boardView" class="flex overflow-x-auto pb-4 gap-2">
-            <!-- Lists will be rendered here -->
-        </div>
-
-        <div id="completedView" class="hidden">
-            <h2 class="text-xl font-semibold mb-4" style="color: var(--text-primary);">Tarefas Concluídas</h2>
-            <div id="completedTasks" class="space-y-4">
-                <!-- Completed tasks will be rendered here -->
-            </div>
-        </div>
-
-        <div id="calendarView" class="hidden">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-xl font-semibold" style="color: var(--text-primary);">Calendário de Tarefas</h2>
-                <div class="flex items-center space-x-2">
-                    <button onclick="changeMonth(-1)" class="px-3 py-1 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700" style="color: var(--text-primary);">◀ Anterior</button>
-                    <span id="currentMonthYear" class="font-medium px-4" style="color: var(--text-primary);"></span>
-                    <button onclick="changeMonth(1)" class="px-3 py-1 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700" style="color: var(--text-primary);">Próximo ▶</button>
-                </div>
-            </div>
-            <div id="calendarGrid" class="grid grid-cols-7 gap-2 mb-4">
-                <!-- Calendar grid will be rendered here -->
-            </div>
-            <div id="calendarTasks" class="space-y-4">
-                <!-- Selected day tasks will be rendered here -->
             </div>
         </div>
     </div>

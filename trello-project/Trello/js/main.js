@@ -76,11 +76,15 @@ function exposeFunctions() {
 function setView(view) {
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
     document.getElementById(`tab-${view}`).classList.add('active');
-    document.getElementById('boardView').classList.toggle('hidden', view !== 'board');
-    document.getElementById('completedView').classList.toggle('hidden', view !== 'completed');
-    document.getElementById('calendarView').classList.toggle('hidden', view !== 'calendar');
-    document.getElementById('dashboardView').classList.toggle('hidden', view !== 'dashboard');
-    document.getElementById('miniStats').classList.toggle('hidden', view !== 'board');
+    
+    // Esconde todas as views primeiro
+    document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
+    
+    // Mostra apenas a view selecionada
+    const selectedView = document.getElementById(`${view}View`);
+    if (selectedView) {
+        selectedView.classList.remove('hidden');
+    }
     
     // Renderizar gráficos quando visualizar o dashboard
     if (view === 'dashboard') {
