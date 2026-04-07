@@ -1,12 +1,13 @@
 // main.js - Ponto de entrada principal da aplicação
 import { migrateData, getData, getLists, getTasks, addTask, updateTask, removeTask, addList, removeList, updateList, updateBoardTitle, toggleDarkMode as toggleDark, clearAllData as clearData, importData } from './storage.js';
 import { generateId, formatDate, formatTime, getPriorityLabel, debounce, showToast, confirmAction, downloadJSON } from './utils.js';
-import { render, populateListSelect, updateCardModal } from './components.js';
+import { render, populateListSelect, updateCardModal, renderCalendarView } from './components.js';
 
 let currentCardId = null;
 let isDragging = false;
 let timerInterval = null;
 let selectedDate = new Date(); // Para o calendário
+let currentDate = new Date(); // Para navegação do calendário
 
 export function init() {
     migrateData();
@@ -78,6 +79,8 @@ function setView(view) {
     document.getElementById('boardView').classList.toggle('hidden', view !== 'board');
     document.getElementById('completedView').classList.toggle('hidden', view !== 'completed');
     document.getElementById('calendarView').classList.toggle('hidden', view !== 'calendar');
+    document.getElementById('dashboardView').classList.toggle('hidden', view !== 'dashboard');
+    document.getElementById('miniStats').classList.toggle('hidden', view !== 'board');
     render();
 }
 
@@ -252,14 +255,14 @@ function exportPDF() {
 }
 
 // Funções do Calendário
-function changeMonth(delta) {
+window.changeMonth = function(delta) {
     currentDate.setMonth(currentDate.getMonth() + delta);
-    renderCalendar();
+    renderCalendarView(currentDate, selectedDate);
 }
 
-function selectDate(dateStr) {
+window.selectDate = function(dateStr) {
     selectedDate = new Date(dateStr);
-    renderCalendar();
+    renderCalendarView(currentDate, selectedDate);
 }
 
 function renderCalendar() {

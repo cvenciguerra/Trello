@@ -15,7 +15,7 @@ export function render() {
     document.getElementById('themeToggle').innerText = data.isDarkMode ? '☀️' : '🌙';
     document.getElementById('boardTitle').innerText = data.boardTitle;
 
-    // Atualizar estatísticas
+    // Atualizar estatísticas (mini stats)
     const tasks = getTasks();
     document.getElementById('stat-total').innerText = tasks.length;
     document.getElementById('stat-doing').innerText = tasks.filter(t => t.listId === 'doing').length;
@@ -28,8 +28,11 @@ export function render() {
         return new Date(t.date) < today;
     }).length;
 
-    // Renderizar gráficos
-    renderCharts();
+    // Renderizar gráficos apenas se a view dashboard estiver visível
+    const dashboardView = document.getElementById('dashboardView');
+    if (dashboardView && !dashboardView.classList.contains('hidden')) {
+        renderCharts();
+    }
 
     renderBoard();
     renderCompleted();
@@ -186,7 +189,145 @@ export function renderCompleted() {
 
 export function renderCalendar() {
     // A função renderCalendar agora está em main.js para melhor controle do estado do calendário
-    // Esta função é chamada apenas quando a view de calendário está ativa
+    // Esta função stub é mantida para compatibilidade de importação
+}
+
+// Função real de renderização do calendário (exportada para uso em main.js)
+export function renderCalendarView(currentDateObj, selectedDateObj) {
+    const grid = document.getElementById('calendarGrid');
+    const monthYearEl = document.getElementById('currentMonthYear');
+    const tasksContainer = document.getElementById('calendarTasks');
+    
+    if (!grid || !monthYearEl) return;
+    
+    const year = currentDateObj.getFullYear();
+    const month = currentDateObj.getMonth();
+    
+    // Atualiza título do mês
+    const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+    monthYearEl.textContent = `${monthNames[month]} ${year}`;
+    
+    // Dias da semana
+    const weekDays = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+    
+    // Limpa grid
+    grid.innerHTML = '';
+    
+    // Adiciona cabeçalho dos dias
+    weekDays.forEach(day => {
+        const dayEl = document.createElement('div');
+        dayEl.className = 'text-center font-semibold py-2 text-sm';
+        dayEl.style.color = 'var(--text-primary)';
+        dayEl.textContent = day;
+        grid.appendChild(dayEl);
+    });
+    
+    // Primeiro dia do mês e total de dias
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    
+    // Dias vazios antes do primeiro dia
+    for (let i = 0; i < firstDay; i++) {
+        const emptyEl = document.createElement('div');
+        grid.appendChild(emptyEl);
+    }
+    
+    // Dias do mês
+    const allTasks = getTasks();
+    const today = new Date();
+    
+    for (let day = 1; day <= daysInMonth; day++) {
+        const date = new Date(year, month, day);
+        const dateStr = date.toISOString().split('T')[0];
+        const dayTasks = allTasks.filter(t => t.date && t.date.startsWith(dateStr));
+        
+        const isToday = date.toDateString() === today.toDateString();
+        const isSelected = date.toDateString() === selectedDateObj.toDateString();
+        
+        const dayEl = document.createElement('div');
+        dayEl.className = `min-h-[80px] p-2 rounded-lg cursor-pointer border transition-all ${
+            isSelected 
+                ? 'ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-900/20' 
+                : 'hover:bg-gray-100 dark:hover:bg-gray-700'
+        } ${isToday ? 'bg-blue-100 dark:bg-blue-800/30' : 'bg-white dark:bg-gray-800'}`;
+        dayEl.style.borderColor = 'var(--border)';
+        dayEl.onclick = () => window.selectDate(dateStr);
+        
+        const dayNum = document.createElement('span');
+        dayNum.className = `text-sm font-medium ${isToday ? 'text-blue-600 dark:text-blue-400' : ''}`;
+        dayNum.style.color = isToday ? '' : 'var(--text-primary)';
+        dayNum.textContent = day;
+        dayEl.appendChild(dayNum);
+        
+        // Tarefas do dia (mostrar apenas as 3 primeiras)
+        const maxVisible = 3;
+        dayTasks.slice(0, maxVisible).forEach(task => {
+            const taskEl = document.createElement('div');
+            taskEl.className = 'mt-1 text-xs px-2 py-1 rounded truncate cursor-pointer';
+            taskEl.style.background = task.priority === 'high' ? 'rgba(239, 68, 68, 0.2)' : 
+                                     task.priority === 'medium' ? 'rgba(245, 158, 11, 0.2)' : 
+                                     'rgba(34, 197, 94, 0.2)';
+            taskEl.style.color = 'var(--text-primary)';
+            taskEl.textContent = task.title;
+            taskEl.onclick = (e) => { e.stopPropagation(); window.openCardModal(task.id); };
+            dayEl.appendChild(taskEl);
+        });
+        
+        // Indicador de mais tarefas
+        if (dayTasks.length > maxVisible) {
+            const moreEl = document.createElement('div');
+            moreEl.className = 'mt-1 text-xs text-center font-medium';
+            moreEl.style.color = 'var(--text-secondary)';
+            moreEl.textContent = `+${dayTasks.length - maxVisible} mais`;
+            dayEl.appendChild(moreEl);
+        }
+        
+        grid.appendChild(dayEl);
+    }
+    
+    // Renderizar tarefas do dia selecionado
+    if (tasksContainer) {
+        tasksContainer.innerHTML = '';
+        const selectedDateStr = selectedDateObj.toISOString().split('T')[0];
+        const selectedTasks = allTasks.filter(t => t.date && t.date.startsWith(selectedDateStr));
+        
+        const titleEl = document.createElement('h3');
+        titleEl.className = 'text-lg font-semibold mb-4';
+        titleEl.style.color = 'var(--text-primary)';
+        titleEl.textContent = `Tarefas para ${selectedDateObj.toLocaleDateString('pt-BR')}`;
+        tasksContainer.appendChild(titleEl);
+        
+        if (selectedTasks.length === 0) {
+            const emptyEl = document.createElement('p');
+            emptyEl.className = 'text-center py-8';
+            emptyEl.style.color = 'var(--text-secondary)';
+            emptyEl.textContent = 'Nenhuma tarefa para este dia.';
+            tasksContainer.appendChild(emptyEl);
+        } else {
+            selectedTasks.forEach(task => {
+                const taskEl = document.createElement('div');
+                taskEl.className = 'p-4 rounded-lg border hover:shadow-md transition-shadow cursor-pointer';
+                taskEl.style.borderColor = 'var(--border)';
+                taskEl.style.background = 'var(--bg-card)';
+                taskEl.onclick = () => window.openCardModal(task.id);
+                
+                const statusBadge = task.listId === 'done' ? '<span class="ml-2 px-2 py-1 text-xs rounded bg-green-100 text-green-800">✓ Concluída</span>' :
+                                   task.listId === 'doing' ? '<span class="ml-2 px-2 py-1 text-xs rounded bg-yellow-100 text-yellow-800">⋯ Em Progresso</span>' : '';
+                
+                taskEl.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <h4 class="font-medium" style="color: var(--text-primary);">${task.title}${statusBadge}</h4>
+                        <span class="text-xs px-2 py-1 rounded" style="background: var(--bg-tertiary); color: var(--text-secondary);">${task.category}</span>
+                    </div>
+                    <div class="mt-2 flex items-center space-x-3 text-sm" style="color: var(--text-secondary);">
+                        <span>🎯 ${getPriorityLabel(task.priority)}</span>
+                        ${task.timeSpent > 0 ? `<span>⏱️ ${formatTime(task.timeSpent)}</span>` : ''}
+                    </div>
+                `;
+                tasksContainer.appendChild(taskEl);
+            });
+        }
+    }
 }
 
 export function populateListSelect(selectId, selectedListId = null) {

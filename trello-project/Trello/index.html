@@ -52,8 +52,31 @@
             </div>
         </header>
 
-        <!-- Dashboard de estatísticas -->
-        <div id="stats" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <!-- Gráficos do Dashboard (só aparece na aba Dashboard) -->
+        <div id="dashboardView" class="hidden">
+            <h2 class="text-xl font-semibold mb-4" style="color: var(--text-primary);">Dashboard de Produtividade</h2>
+            <div id="chartsDashboard" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+                <div class="stat-card p-4">
+                    <h3 class="text-lg font-semibold mb-4" style="color: var(--text-primary);">Tarefas por Status</h3>
+                    <canvas id="statusChart"></canvas>
+                </div>
+                <div class="stat-card p-4">
+                    <h3 class="text-lg font-semibold mb-4" style="color: var(--text-primary);">Produtividade (30 dias)</h3>
+                    <canvas id="productivityChart"></canvas>
+                </div>
+                <div class="stat-card p-4">
+                    <h3 class="text-lg font-semibold mb-4" style="color: var(--text-primary);">Tarefas por Prioridade</h3>
+                    <canvas id="priorityChart"></canvas>
+                </div>
+            </div>
+            <div class="stat-card p-4 mb-6">
+                <h3 class="text-lg font-semibold mb-4" style="color: var(--text-primary);">Atividade Anual (Heatmap)</h3>
+                <div id="heatmapContainer" class="overflow-x-auto"></div>
+            </div>
+        </div>
+
+        <!-- Mini estatísticas (sempre visíveis no Quadro) -->
+        <div id="miniStats" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
             <div class="stat-card">
                 <div class="stat-number" style="color: var(--accent);" id="stat-total">0</div>
                 <div class="stat-label">Total Tarefas</div>
@@ -72,31 +95,14 @@
             </div>
         </div>
 
-        <!-- Gráficos do Dashboard -->
-        <div id="chartsDashboard" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-            <div class="stat-card p-4">
-                <h3 class="text-lg font-semibold mb-4" style="color: var(--text-primary);">Tarefas por Status</h3>
-                <canvas id="statusChart"></canvas>
-            </div>
-            <div class="stat-card p-4">
-                <h3 class="text-lg font-semibold mb-4" style="color: var(--text-primary);">Produtividade (30 dias)</h3>
-                <canvas id="productivityChart"></canvas>
-            </div>
-            <div class="stat-card p-4">
-                <h3 class="text-lg font-semibold mb-4" style="color: var(--text-primary);">Tarefas por Prioridade</h3>
-                <canvas id="priorityChart"></canvas>
-            </div>
-        </div>
-        <div class="stat-card p-4 mb-6">
-            <h3 class="text-lg font-semibold mb-4" style="color: var(--text-primary);">Atividade Anual (Heatmap)</h3>
-            <div id="heatmapContainer" class="overflow-x-auto"></div>
-        </div>
-
         <div class="tabs flex mb-6 gap-2">
             <button onclick="setView('board')" class="tab px-4 py-2 font-medium border-b-2 border-transparent rounded-lg" id="tab-board">📋 Quadro</button>
             <button onclick="setView('completed')" class="tab px-4 py-2 font-medium border-b-2 border-transparent rounded-lg" id="tab-completed">✅ Concluídas</button>
             <button onclick="setView('calendar')" class="tab px-4 py-2 font-medium border-b-2 border-transparent rounded-lg" id="tab-calendar">📅 Calendário</button>
+            <button onclick="setView('dashboard')" class="tab px-4 py-2 font-medium border-b-2 border-transparent rounded-lg" id="tab-dashboard">📊 Dashboard</button>
         </div>
+
+        <button onclick="openAddTaskModal('todo')" class="mb-4 px-6 py-3 rounded-lg font-bold text-white shadow-lg hover:opacity-90 transition-opacity" style="background: var(--accent);">+ Nova Tarefa</button>
 
         <div id="boardView" class="flex overflow-x-auto pb-4 gap-2">
             <!-- Lists will be rendered here -->
